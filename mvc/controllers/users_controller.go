@@ -2,26 +2,33 @@ package controllers
 
 import (
 	"encoding/json"
-	"fmt"
 	"net/http"
 	"strconv"
 
+	"github.com/108356037/goBackendMvc/errors"
 	"github.com/108356037/goBackendMvc/services"
 )
 
 func GetUser(resp http.ResponseWriter, req *http.Request) {
-	fmt.Printf("Getting request %v \n", req)
+	// fmt.Printf("Getting request from %v \n", req)
 	userId, err := strconv.ParseInt(req.URL.Query().Get("user_id"), 10, 64)
 	if err != nil {
-		resp.WriteHeader(http.StatusBadGateway)
-		resp.Write([]byte("user_id must be int"))
+		apiErr := &errors.MiddlewareError{
+			Message:    err.Error(),
+			StatusCode: http.StatusBadRequest,
+			Code:       "Bad Request",
+		}
+		jsonValue, _ := json.Marshal(apiErr)
+		resp.WriteHeader(apiErr.StatusCode)
+		resp.Write([]byte(jsonValue))
 		return
 	}
 
-	user, err := services.GetUser(userId)
-	if err != nil {
-		resp.WriteHeader(http.StatusNotFound)
-		resp.Write([]byte(err.Error()))
+	user, apiErr := services.GetUser(userId)
+	if apiErr != nil {
+		jsonValue, _ := json.Marshal(apiErr)
+		resp.WriteHeader(apiErr.StatusCode)
+		resp.Write([]byte(jsonValue))
 		return
 	}
 
