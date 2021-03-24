@@ -3,35 +3,30 @@ package controllers
 import (
 	"encoding/json"
 	"net/http"
-	"strconv"
 
-	"github.com/108356037/goBackendMvc/errors"
+	"github.com/108356037/goBackendMvc/appErrors"
 	"github.com/108356037/goBackendMvc/services"
+	"github.com/gorilla/mux"
 )
 
-func GetUser(resp http.ResponseWriter, req *http.Request) {
-	// fmt.Printf("Getting request from %v \n", req)
-	userId, err := strconv.ParseInt(req.URL.Query().Get("user_id"), 10, 64)
+func GetUserById(resp http.ResponseWriter, req *http.Request) {
+	vars := mux.Vars(req)
+	userId := vars["id"]
+	user, err := services.GetUserById(userId)
 	if err != nil {
-		apiErr := &errors.MiddlewareError{
-			Message:    err.Error(),
-			StatusCode: http.StatusBadRequest,
-			Code:       "Bad Request",
-		}
-		jsonValue, _ := json.Marshal(apiErr)
-		resp.WriteHeader(apiErr.StatusCode)
-		resp.Write([]byte(jsonValue))
+		appErrors.SerivceError(err, resp)
 		return
 	}
-
-	user, apiErr := services.GetUser(userId)
-	if apiErr != nil {
-		jsonValue, _ := json.Marshal(apiErr)
-		resp.WriteHeader(apiErr.StatusCode)
-		resp.Write([]byte(jsonValue))
-		return
-	}
-
 	jsonValue, _ := json.Marshal(user)
+	resp.Write(jsonValue)
+}
+
+func GetAllUsers(resp http.ResponseWriter, req *http.Request) {
+	users, err := services.GetAllUsers()
+	if err != nil {
+		appErrors.SerivceError(err, resp)
+		return
+	}
+	jsonValue, _ := json.Marshal(users)
 	resp.Write(jsonValue)
 }

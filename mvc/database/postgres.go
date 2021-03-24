@@ -1,4 +1,4 @@
-package config
+package database
 
 import (
 	"database/sql"
@@ -15,20 +15,23 @@ const (
 	dbname   = "postgres"
 )
 
-func Init() *sql.DB {
+var DB *sql.DB
+
+func PostgresConnect() error {
 	psqlInfo := fmt.Sprintf("host=%s port=%d user=%s "+
 		"password=%s dbname=%s sslmode=disable",
 		host, port, user, password, dbname)
 	db, err := sql.Open("postgres", psqlInfo)
 	if err != nil {
-		panic(err)
+		return err
 	}
 
 	err = db.Ping()
 	if err != nil {
-		panic(err)
+		return err
 	}
 
-	fmt.Println("Successfully connected!")
-	return db
+	DB = db
+	fmt.Println("Successfully connected to postgres!")
+	return nil
 }
