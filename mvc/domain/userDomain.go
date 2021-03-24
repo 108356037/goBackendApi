@@ -4,12 +4,6 @@ import (
 	"github.com/108356037/goBackendMvc/database"
 )
 
-var (
-	tempusers = map[string]*User{
-		"123": {9527, "Wei Che", "Tsai", "108356037@nccu.edu.tw", "LA Lakers"},
-	}
-)
-
 func GetUserById(userId string) (*User, error) {
 	sqlStatement := `Select * From tbl_userinfo WHERE user_id=$1`
 	user := User{}
