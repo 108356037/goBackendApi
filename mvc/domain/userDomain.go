@@ -21,9 +21,9 @@ func GetAllUsers() ([]*User, error) {
 	}
 
 	users := make([]*User, 0)
-	user := User{}
 
 	for rows.Next() {
+		user := User{}
 		if err := rows.Scan(&user.Id, &user.FirstName, &user.LastName, &user.Email, &user.Team); err != nil {
 			return nil, err
 		}
