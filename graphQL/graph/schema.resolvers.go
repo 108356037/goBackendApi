@@ -12,7 +12,12 @@ import (
 )
 
 func (r *mutationResolver) CreateLink(ctx context.Context, input model.NewLink) (*model.Link, error) {
-	panic(fmt.Errorf("not implemented"))
+	var link model.Link
+	user := model.User{Name: "testUser"}
+	link.Address = input.Address
+	link.Title = input.Title
+	link.User = &user
+	return &link, nil
 }
 
 func (r *mutationResolver) CreateUser(ctx context.Context, input model.NewUser) (*model.User, error) {
@@ -28,7 +33,14 @@ func (r *mutationResolver) RefreshToken(ctx context.Context, input model.Refresh
 }
 
 func (r *queryResolver) Links(ctx context.Context) ([]*model.Link, error) {
-	panic(fmt.Errorf("not implemented"))
+	var links []*model.Link
+	dummyLink := model.Link{
+		Title:   "dummy link",
+		Address: "https://dummy.link.org",
+		User:    &model.User{Name: "Dcc Boy"},
+	}
+	links = append(links, &dummyLink)
+	return links, nil
 }
 
 // Mutation returns generated.MutationResolver implementation.
