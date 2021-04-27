@@ -7,6 +7,7 @@ import (
 
 	"graphql/example.com/graph"
 	"graphql/example.com/graph/generated"
+	"graphql/example.com/internal/auth"
 
 	database "graphql/example.com/internal/pkg/db/mysql"
 
@@ -26,6 +27,7 @@ func main() {
 	}
 
 	router := chi.NewRouter()
+	router.Use(auth.Middleware())
 
 	database.InitDB()
 	database.Migrate()

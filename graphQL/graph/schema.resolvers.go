@@ -6,22 +6,37 @@ package graph
 import (
 	"context"
 	"fmt"
-
 	"graphql/example.com/graph/generated"
 	"graphql/example.com/graph/model"
+	"graphql/example.com/internal/links"
+	"graphql/example.com/internal/users"
+	"graphql/example.com/pkg/jwt"
+	"strconv"
 )
 
 func (r *mutationResolver) CreateLink(ctx context.Context, input model.NewLink) (*model.Link, error) {
-	var link model.Link
-	user := model.User{Name: "testUser"}
+	var link links.Link
 	link.Address = input.Address
 	link.Title = input.Title
-	link.User = &user
-	return &link, nil
+	linkID, err := link.Save()
+	if err != nil {
+		return nil, err
+	}
+	return &model.Link{ID: strconv.FormatInt(linkID, 10), Title: link.Title, Address: link.Address}, nil
 }
 
-func (r *mutationResolver) CreateUser(ctx context.Context, input model.NewUser) (*model.User, error) {
-	panic(fmt.Errorf("not implemented"))
+func (r *mutationResolver) CreateUser(ctx context.Context, input model.NewUser) (string, error) {
+	var user users.User
+	user.Username = input.Username
+	user.Password = input.Password
+	if err := user.Create(); err != nil {
+		return "", err
+	}
+	token, err := jwt.GenerateToken(user.Username)
+	if err != nil {
+		return "", err
+	}
+	return token, nil
 }
 
 func (r *mutationResolver) Login(ctx context.Context, input model.Login) (string, error) {
@@ -33,14 +48,19 @@ func (r *mutationResolver) RefreshToken(ctx context.Context, input model.Refresh
 }
 
 func (r *queryResolver) Links(ctx context.Context) ([]*model.Link, error) {
-	var links []*model.Link
-	dummyLink := model.Link{
-		Title:   "dummy link",
-		Address: "https://dummy.link.org",
-		User:    &model.User{Name: "Dcc Boy"},
+	resultLinks := []*model.Link{}
+	dbLinks, err := links.GetAll()
+	if err != nil {
+		return nil, err
 	}
-	links = append(links, &dummyLink)
-	return links, nil
+	for _, val := range dbLinks {
+		resultLinks = append(resultLinks, &model.Link{
+			ID:      val.ID,
+			Title:   val.Title,
+			Address: val.Address,
+		})
+	}
+	return resultLinks, nil
 }
 
 // Mutation returns generated.MutationResolver implementation.
