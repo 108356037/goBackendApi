@@ -1,0 +1,34 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  labels:
+    app: auth-depl
+  name: auth-depl
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: auth-depl
+  strategy: {}
+  template:
+    metadata:
+      labels:
+        app: auth-depl
+    spec:
+      containers:
+      - image: 108356037/auth-depl-go
+        name: auth-depl-go
+        resources: {}
+status: {}
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: auth-depl-svc
+spec:
+  selector:
+    app: auth-depl
+  ports:
+    - port: 3000
+      targetPort: 3000
+      protocol: TCP

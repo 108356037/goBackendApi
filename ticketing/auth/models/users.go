@@ -5,3 +5,7 @@ type User struct {
 	Password string `json:"password"`
 	// probably need id from db
 }
+
+func CreateUser(users *User) error {
+	return nil
+}

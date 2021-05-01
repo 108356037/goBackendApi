@@ -16,6 +16,7 @@ import (
 func SignUpHandler(w http.ResponseWriter, r *http.Request) {
 
 	// returns error if the Content-Type is not "application/json"
+	// * can be in common middleware *
 	if r.Header.Get("Content-Type") != "" {
 		value, _ := header.ParseValueAndParams(r.Header, "Content-Type")
 		if value != "application/json" {
@@ -33,6 +34,9 @@ func SignUpHandler(w http.ResponseWriter, r *http.Request) {
 
 	user := models.User{}
 	err := dec.Decode(&user)
+
+	// below logic is for any error that happens in request decode stage
+	// * can be in common middleware *
 	if err != nil {
 		var syntaxError *json.SyntaxError
 		var unmarshalTypeError *json.UnmarshalTypeError
