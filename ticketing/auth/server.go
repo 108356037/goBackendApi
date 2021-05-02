@@ -8,9 +8,20 @@ import (
 
 	"github.com/108356037/goticketapp/auth/routes"
 	"github.com/gorilla/mux"
+
+	database "github.com/108356037/goticketapp/auth/internal/pkg/db/postgres"
 )
 
 func main() {
+
+	if err := database.InitDb(); err != nil {
+		log.Fatal(err)
+	}
+
+	if err := database.Migrate(); err != nil {
+		log.Fatal(err)
+	}
+
 	r := mux.NewRouter()
 	r.HandleFunc("/api/users/signup", routes.SignUpHandler).Methods("POST")
 	srv := &http.Server{
