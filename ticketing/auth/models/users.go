@@ -37,5 +37,8 @@ func CreateUser(users *User) (int, error) {
 	if err != nil {
 		return -1, err
 	}
+
+	defer stmt.Close()
+
 	return userId, nil
 }
