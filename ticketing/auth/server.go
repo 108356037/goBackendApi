@@ -10,6 +10,7 @@ import (
 	"github.com/gorilla/mux"
 
 	database "github.com/108356037/goticketapp/auth/internal/pkg/db/postgres"
+	"github.com/108356037/goticketapp/auth/middleware"
 )
 
 func main() {
@@ -23,7 +24,8 @@ func main() {
 	}
 
 	r := mux.NewRouter()
-	r.HandleFunc("/api/users/signup", routes.SignUpHandler).Methods("POST")
+	r.HandleFunc("/api/users/signup", middleware.RequestValidate(routes.SignUpHandlerFunc)).Methods("POST")
+	// r.HandleFunc("/api/users/currentuser", )
 	srv := &http.Server{
 		Handler: r,
 		Addr:    "127.0.0.1:3000",

@@ -27,6 +27,8 @@ func CreateUser(users *User) (int, error) {
 		return -1, err
 	}
 
+	defer stmt.Close()
+
 	hashedpasswd, err := HashPassword(users.Password)
 	if err != nil {
 		return -1, err
@@ -37,8 +39,6 @@ func CreateUser(users *User) (int, error) {
 	if err != nil {
 		return -1, err
 	}
-
-	defer stmt.Close()
 
 	return userId, nil
 }
