@@ -8,6 +8,8 @@ import (
 	"log"
 	"net/http"
 	"strings"
+
+	"github.com/golang/gddo/httputil/header"
 )
 
 type errorResp struct {
@@ -79,4 +81,18 @@ func RequestBodyError(w http.ResponseWriter, err error) {
 		log.Println(err.Error())
 		JSONError(w, http.StatusText(http.StatusInternalServerError), http.StatusInternalServerError)
 	}
+}
+
+func RequestValidate(next http.HandlerFunc) http.HandlerFunc {
+	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		if r.Header.Get("Content-Type") != "" {
+			value, _ := header.ParseValueAndParams(r.Header, "Content-Type")
+			if value != "application/json" {
+				msg := "Content-Type header is not application/json"
+				JSONError(w, msg, http.StatusUnsupportedMediaType)
+				return
+			}
+			next(w, r)
+		}
+	})
 }

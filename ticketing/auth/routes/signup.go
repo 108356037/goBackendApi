@@ -3,27 +3,20 @@ package routes
 import (
 	"encoding/json"
 	"net/http"
+	"strconv"
+	"time"
 
 	"github.com/108356037/goticketapp/auth/middleware"
 	"github.com/108356037/goticketapp/auth/models"
-	"github.com/golang/gddo/httputil/header"
+	"github.com/108356037/goticketapp/auth/sesscookie"
+	"github.com/dgrijalva/jwt-go"
 )
 
-func SignUpHandler(w http.ResponseWriter, r *http.Request) {
-
-	// returns error if the Content-Type is not "application/json"
-	// * can be in common middleware *
-	if r.Header.Get("Content-Type") != "" {
-		value, _ := header.ParseValueAndParams(r.Header, "Content-Type")
-		if value != "application/json" {
-			msg := "Content-Type header is not application/json"
-			middleware.JSONError(w, msg, http.StatusUnsupportedMediaType)
-			return
-		}
-	}
+func SignUpHandlerFunc(w http.ResponseWriter, r *http.Request) {
 
 	// use http.MaxBytesReader to enforce maximum read of 1MB from the response body
 	r.Body = http.MaxBytesReader(w, r.Body, 1048576)
+	defer r.Body.Close()
 
 	dec := json.NewDecoder(r.Body)
 	dec.DisallowUnknownFields()
@@ -31,25 +24,54 @@ func SignUpHandler(w http.ResponseWriter, r *http.Request) {
 	user := models.User{}
 	err := dec.Decode(&user)
 
-	// below logic is for any error that happens in request-body decode stage
 	if err != nil {
 		middleware.RequestBodyError(w, err)
 		return
 	}
 
-	w.Header().Set("Content-Type", "application/json")
 	userId, err := models.CreateUser(&user)
-	user.UserId = userId
 	if err != nil {
 		middleware.JSONError(w, err.Error(), http.StatusInternalServerError)
 		return
 	}
 
+	user.UserId = userId
 	userJs, err := json.Marshal(user)
 	if err != nil {
 		middleware.JSONError(w, err.Error(), http.StatusInternalServerError)
 		return
 	}
+
+	claims := sesscookie.UserJwt{
+		UserId: strconv.Itoa(userId),
+		Email:  user.Email,
+		StandardClaims: jwt.StandardClaims{
+			IssuedAt: time.Now().Unix(),
+		},
+	}
+
+	token := jwt.NewWithClaims(jwt.SigningMethodHS256, claims)
+	signedToken, err := token.SignedString([]byte(sesscookie.JwtSignKey))
+	if err != nil {
+		middleware.JSONError(w, err.Error(), http.StatusInternalServerError)
+		return
+	}
+
+	session, err := sesscookie.Store.Get(r, sesscookie.SessionName)
+	if err != nil {
+		middleware.JSONError(w, err.Error(), http.StatusInternalServerError)
+		return
+	}
+
+	session.Values["authenticated"] = true
+	session.Values["jwt"] = signedToken
+	if err := session.Save(r, w); err != nil {
+		middleware.JSONError(w, err.Error(), http.StatusInternalServerError)
+		return
+	}
+
+	w.Header().Set("Content-Type", "application/json; charset=utf-8")
+	w.WriteHeader(201)
 	w.Write(userJs)
 
 }
