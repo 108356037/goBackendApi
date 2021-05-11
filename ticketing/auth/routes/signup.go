@@ -6,10 +6,9 @@ import (
 	"strconv"
 	"time"
 
+	"github.com/108356037/goticketapp/auth/jwtutils"
 	"github.com/108356037/goticketapp/auth/middleware"
 	"github.com/108356037/goticketapp/auth/models"
-	"github.com/108356037/goticketapp/auth/sesscookie"
-	"github.com/dgrijalva/jwt-go"
 )
 
 func SignUpHandlerFunc(w http.ResponseWriter, r *http.Request) {
@@ -34,44 +33,39 @@ func SignUpHandlerFunc(w http.ResponseWriter, r *http.Request) {
 		middleware.JSONError(w, err.Error(), http.StatusInternalServerError)
 		return
 	}
-
 	user.UserId = userId
-	userJs, err := json.Marshal(user)
+
+	signedToken, err := jwtutils.CreateUserTokenString(strconv.Itoa(user.UserId), user.Email)
 	if err != nil {
 		middleware.JSONError(w, err.Error(), http.StatusInternalServerError)
 		return
 	}
 
-	claims := sesscookie.UserJwt{
-		UserId: strconv.Itoa(userId),
-		Email:  user.Email,
-		StandardClaims: jwt.StandardClaims{
-			IssuedAt: time.Now().Unix(),
-		},
+	// claims := jwtutils.UserJwt{
+	// 	UserId: strconv.Itoa(userId),
+	// 	Email:  user.Email,
+	// 	StandardClaims: jwt.StandardClaims{
+	// 		IssuedAt:  time.Now().Unix(),
+	// 		ExpiresAt: time.Now().Add(30 * 24 * time.Hour).Unix(),
+	// 	},
+	// }
+
+	// token := jwt.NewWithClaims(jwt.SigningMethodHS256, claims)
+	// signedToken, err := token.SignedString([]byte(jwtutils.JwtSignKey))
+	// if err != nil {
+	// 	middleware.JSONError(w, err.Error(), http.StatusInternalServerError)
+	// 	return
+	// }
+
+	cookie := http.Cookie{
+		Name:     "session-cookie",
+		Value:    signedToken,
+		HttpOnly: true,
+		Path:     "/",
+		Expires:  time.Now().Add(24 * time.Hour),
 	}
 
-	token := jwt.NewWithClaims(jwt.SigningMethodHS256, claims)
-	signedToken, err := token.SignedString([]byte(sesscookie.JwtSignKey))
-	if err != nil {
-		middleware.JSONError(w, err.Error(), http.StatusInternalServerError)
-		return
-	}
-
-	session, err := sesscookie.Store.Get(r, sesscookie.SessionName)
-	if err != nil {
-		middleware.JSONError(w, err.Error(), http.StatusInternalServerError)
-		return
-	}
-
-	session.Values["authenticated"] = true
-	session.Values["jwt"] = signedToken
-	if err := session.Save(r, w); err != nil {
-		middleware.JSONError(w, err.Error(), http.StatusInternalServerError)
-		return
-	}
-
-	w.Header().Set("Content-Type", "application/json; charset=utf-8")
+	http.SetCookie(w, &cookie)
 	w.WriteHeader(201)
-	w.Write(userJs)
-
+	json.NewEncoder(w).Encode(user)
 }
