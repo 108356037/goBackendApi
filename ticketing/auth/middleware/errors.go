@@ -17,8 +17,8 @@ type errorResp struct {
 }
 
 func JSONError(w http.ResponseWriter, errMsg string, code int) {
-	w.Header().Set("Content-Type", "application/json; charset=utf-8")
-	w.Header().Set("X-Content-Type-Options", "nosniff")
+	w.Header().Set("Content-Type", "application/json")
+	// w.Header().Set("X-Content-Type-Options", "nosniff")
 	w.WriteHeader(code)
 	msg := errorResp{Message: errMsg}
 	json.NewEncoder(w).Encode(msg)
@@ -92,7 +92,7 @@ func RequestValidate(next http.HandlerFunc) http.HandlerFunc {
 				JSONError(w, msg, http.StatusUnsupportedMediaType)
 				return
 			}
-			next(w, r)
 		}
+		next(w, r)
 	})
 }
