@@ -25,7 +25,8 @@ func main() {
 
 	r := mux.NewRouter()
 	r.HandleFunc("/api/users/signup", middleware.RequestValidate(routes.SignUpHandlerFunc)).Methods("POST")
-	// r.HandleFunc("/api/users/currentuser", )
+	r.HandleFunc("/api/users/currentuser", routes.CurrentUserHandlerFunc).Methods("GET")
+	r.HandleFunc("/api/users/signout", routes.SignOutHandlerFunc).Methods("POST")
 	srv := &http.Server{
 		Handler: r,
 		Addr:    "127.0.0.1:3000",
