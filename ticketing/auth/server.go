@@ -27,6 +27,7 @@ func main() {
 	r.HandleFunc("/api/users/signup", middleware.RequestValidate(routes.SignUpHandlerFunc)).Methods("POST")
 	r.HandleFunc("/api/users/currentuser", routes.CurrentUserHandlerFunc).Methods("GET")
 	r.HandleFunc("/api/users/signout", routes.SignOutHandlerFunc).Methods("POST")
+	r.HandleFunc("/api/users/signin", routes.SignInHandlerFunc).Methods("POST")
 	srv := &http.Server{
 		Handler: r,
 		Addr:    "127.0.0.1:3000",
