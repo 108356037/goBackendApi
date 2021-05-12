@@ -13,7 +13,7 @@ import (
 )
 
 type errorResp struct {
-	Message string `json:"message"`
+	Message string `json:"error"`
 }
 
 func JSONError(w http.ResponseWriter, errMsg string, code int) {
