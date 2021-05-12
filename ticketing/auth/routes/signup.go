@@ -41,22 +41,6 @@ func SignUpHandlerFunc(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	// claims := jwtutils.UserJwt{
-	// 	UserId: strconv.Itoa(userId),
-	// 	Email:  user.Email,
-	// 	StandardClaims: jwt.StandardClaims{
-	// 		IssuedAt:  time.Now().Unix(),
-	// 		ExpiresAt: time.Now().Add(30 * 24 * time.Hour).Unix(),
-	// 	},
-	// }
-
-	// token := jwt.NewWithClaims(jwt.SigningMethodHS256, claims)
-	// signedToken, err := token.SignedString([]byte(jwtutils.JwtSignKey))
-	// if err != nil {
-	// 	middleware.JSONError(w, err.Error(), http.StatusInternalServerError)
-	// 	return
-	// }
-
 	cookie := http.Cookie{
 		Name:     "session-cookie",
 		Value:    signedToken,
@@ -67,5 +51,8 @@ func SignUpHandlerFunc(w http.ResponseWriter, r *http.Request) {
 
 	http.SetCookie(w, &cookie)
 	w.WriteHeader(201)
-	json.NewEncoder(w).Encode(user)
+	json.NewEncoder(w).Encode(models.ResponseUser{
+		UserId: user.UserId,
+		Email:  user.Email,
+	})
 }
