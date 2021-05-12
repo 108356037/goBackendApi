@@ -1,6 +1,8 @@
 package models
 
 import (
+	"errors"
+
 	database "github.com/108356037/goticketapp/auth/internal/pkg/db/postgres"
 	"golang.org/x/crypto/bcrypt"
 )
@@ -9,6 +11,11 @@ type User struct {
 	Email    string `json:"email"`
 	Password string `json:"password"`
 	UserId   int    `json:"userId"`
+}
+
+type ResponseUser struct {
+	Email  string `json:"email"`
+	UserId int    `json:"userId"`
 }
 
 func HashPassword(password string) (string, error) {
@@ -41,4 +48,26 @@ func CreateUser(users *User) (int, error) {
 	}
 
 	return userId, nil
+}
+
+func GetUser(email, password string) (*User, error) {
+	stmt, err := database.Db.Prepare("SELECT user_id,email,password FROM users WHERE email=$1")
+	if err != nil {
+		return nil, err
+	}
+
+	defer stmt.Close()
+
+	var user User
+	err = stmt.QueryRow(email).Scan(&user.UserId, &user.Email, &user.Password)
+	if err != nil {
+		return nil, err
+	}
+
+	if CheckPasswordHash(password, user.Password) {
+		return &user, nil
+	}
+
+	return nil, errors.New("incorrect password or email")
+
 }
